@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ascendrix: Total Authority Protocol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Fonts: Cinzel (Tech/Royal), Playfair (Body/Quotes), Oswald (Headers), Share Tech Mono (HUD) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Oswald:wght@300;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            /* REVIDIRANA PALETA - MANJE MRAČNA, PRIJATNIJA ZA OČI */
+            --bg-deep: #161618; /* Antracit umesto crne */
+            --bg-panel: #222225; /* Svetlija siva za panele */
+            --bg-overlay: rgba(22, 22, 24, 0.95);
+            
+            --accent-platinum: #cbd5e1; /* Hladno srebro */
+            --accent-gold: #c5a059; /* Klasično zlato */
+            
+            --text-main: #e2e2e2; /* Ne skroz bela, mekša za oči */
+            --text-muted: #9ca3af; /* Svetlija siva za sporedni tekst */
+            
+            --font-header: 'Oswald', sans-serif;
+            --font-protocol: 'Cinzel', serif;
+            --font-body: 'Playfair Display', serif;
+            --font-hud: 'Share Tech Mono', monospace;
+            
+            --ease-lux: cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* --- GLOBAL & SCALE --- */
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            /* SKALIRANJE INTERFEJSA NA 90% */
+            zoom: 0.90; 
+            /* Pozadina sa teksturom ali svetlija */
+            background-image: 
+                linear-gradient(rgba(22, 22, 24, 0.92), rgba(22, 22, 24, 0.96)),
+                url('https://www.transparenttextures.com/patterns/cubes.png');
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold); }
+
+        /* Typography */
+        h1, h2, h3 { font-family: var(--font-header); text-transform: uppercase; letter-spacing: 1px; }
+        
+        .elite-title {
+            background: linear-gradient(to right, #ffffff, var(--accent-platinum), #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .quote-box {
+            border-left: 3px solid var(--accent-gold);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            font-style: italic;
+            background: linear-gradient(90deg, rgba(197, 160, 89, 0.08), transparent);
+            color: #f0f0f0;
+            position: relative;
+        }
+        .quote-box::before {
+            content: '"';
+            position: absolute; top: -10px; left: 10px;
+            font-size: 4rem; color: var(--accent-gold); opacity: 0.2; font-family: var(--font-protocol);
+        }
+
+        /* --- HUD --- */
+        .hud-bar {
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+            background: rgba(22, 22, 24, 0.95);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .hud-stat {
+            font-family: var(--font-hud);
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--accent-platinum);
+            text-transform: uppercase;
+        }
+
+        /* --- MENU --- */
+        .menu-btn {
+            position: fixed; top: 15px; right: 30px; z-index: 110;
+            width: 40px; height: 40px;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s; background: rgba(30,30,30,0.8);
+        }
+        .menu-btn:hover { background: var(--accent-gold); color: #000; }
+
+        .menu-overlay {
+            position: fixed; top: 0; right: 0; width: 100%; height: 100%;
+            background: var(--bg-deep); z-index: 105;
+            transform: translateX(100%);
+            transition: transform 0.5s var(--ease-lux);
+            border-left: 1px solid #333;
+            display: flex; flex-direction: column;
+            box-shadow: -10px 0 50px rgba(0,0,0,0.5);
+        }
+        .menu-overlay.active { transform: translateX(0); }
+        @media(min-width: 768px) { .menu-overlay { width: 450px; margin-left: auto; } }
+
+        .menu-link {
+            padding: 18px 30px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 15px;
+        }
+        .menu-link:hover { background: rgba(255,255,255,0.05); padding-left: 35px; }
+        .menu-phase {
+            font-family: var(--font-hud); color: var(--accent-gold); font-size: 11px; letter-spacing: 3px;
+            padding: 25px 30px 10px; text-transform: uppercase; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* --- INTEL OVERLAY --- */
+        .intel-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: 0.6s;
+            backdrop-filter: blur(5px);
+        }
+        .intel-overlay.active { opacity: 1; pointer-events: all; }
+
+        .intel-card {
+            width: 90%; max-width: 600px;
+            border: 1px solid var(--accent-platinum);
+            background: var(--bg-panel);
+            padding: 50px; text-align: center;
+            box-shadow: 0 0 60px rgba(197, 160, 89, 0.1);
+            position: relative;
+        }
+        .intel-card::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+            animation: scan 2s infinite;
+        }
+        @keyframes scan { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        /* --- COMPONENTS --- */
+        .tactical-btn {
+            background: transparent; border: 1px solid var(--accent-gold);
+            color: var(--accent-gold); padding: 14px 30px;
+            font-family: var(--font-header); letter-spacing: 2px;
+            font-size: 13px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .tactical-btn:hover { background: var(--accent-gold); color: #000; box-shadow: 0 0 25px rgba(197, 160, 89, 0.4); }
+
+        .content-card {
+            background: var(--bg-panel); border: 1px solid rgba(255,255,255,0.08);
+            padding: 35px; margin-bottom: 20px; transition: 0.3s;
+        }
+        .content-card:hover { border-color: var(--accent-platinum); transform: translateY(-2px); }
+        
+        .step-icon {
+            min-width: 45px; height: 45px; border: 1px solid rgba(255,255,255,0.15);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent-platinum); margin-right: 20px; font-size: 16px;
+        }
+
+        /* Inputs */
+        textarea {
+            width: 100%; background: rgba(0,0,0,0.2); border: 1px solid #444;
+            color: #eee; padding: 15px; font-family: var(--font-body);
+            transition: 0.3s; resize: vertical; font-size: 16px;
+        }
+        textarea:focus { border-color: var(--accent-gold); outline: none; background: rgba(0,0,0,0.4); }
+
+        /* IMAGES - FULL COLOR */
+        .hero-bg {
+            /* NEMA VIŠE GRAYSCALE FILTRA */
+            filter: brightness(70%) contrast(110%); 
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- HUD -->
+    <div class="hud-bar">
+        <div class="flex items-center gap-4">
+            <i class="fas fa-chess-king text-[var(--accent-gold)] text-xl"></i>
+            <div>
+                <div class="hud-stat text-white font-bold">ASCENDRIX</div>
+                <div class="hud-stat text-[var(--accent-gold)]">TOTAL AUTHORITY</div>
+            </div>
+        </div>
+        <div class="hidden md:block hud-stat tracking-[5px]">ACCESS LEVEL: UNRESTRICTED</div>
+        <div class="w-10"></div>
+    </div>
+
+    <!-- MENU BUTTON -->
+    <button onclick="toggleMenu()" class="menu-btn"><i class="fas fa-bars"></i></button>
+
+    <!-- MENU OVERLAY -->
+    <div id="menuOverlay" class="menu-overlay">
+        <div class="p-8 border-b border-[#333] mt-16 bg-[#1a1a1a]">
+            <h2 class="text-3xl text-white font-[var(--font-protocol)]">Protokol</h2>
+            <p class="hud-stat mt-2 text-[#888]">Odaberi Sektor</p>
+        </div>
+        <div class="overflow-y-auto flex-1 pb-10" id="menuContainer"></div>
+    </div>
+
+    <!-- INTEL DROP (MESSAGE) -->
+    <div id="intelOverlay" class="intel-overlay">
+        <div class="intel-card">
+            <i class="fas fa-fingerprint text-5xl text-[#444] mb-8"></i>
+            <h3 class="hud-stat text-[var(--accent-gold)] mb-8 tracking-[6px] text-sm">INCOMING TRANSMISSION</h3>
+            <p id="intelMessage" class="text-2xl md:text-3xl text-white font-[var(--font-body)] italic leading-relaxed mb-12">
+                <!-- Message injected here -->
+            </p>
+            <button onclick="dismissIntel()" class="tactical-btn">
+                <i class="fas fa-unlock mr-2"></i> DECRYPT DATA
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main id="mainContainer" class="max-w-7xl mx-auto px-6 pt-32 pb-24 opacity-0 transition-opacity duration-700">
+        <!-- Content injected here -->
+    </main>
+
+    <script>
+        // --- CONTENT DATABASE (FULL COLOR & EXPANDED) ---
+        const courseData = [
+            // FAZA 1: UNUTRAŠNJI AUTORITET
+            { 
+                day: 1, phase: 1, title: 'Temelj: Tišina kao Oružje', 
+                msg: "Onaj ko prvi progovori da bi popunio tišinu, već je predao moć.", 
+                img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600', 
+                intro: `<p>Autoritet se ne uzima vikom. Autoritet se projektuje mirom. Većina ljudi oseća duboku, biološku anksioznost kada u razgovoru nastane "prazan hod". Oni žure da ga popune rečima, pravdanjem, smeškanjem ili nepotrebnim informacijama. To je odlika onih koji traže odobravanje – odlika sluga.</p><p>Pravi autoritet počinje tamo gde reči prestaju. Tvoja sposobnost da izdržiš tenziju tišine govori drugima da si siguran u svoju poziciju i da ti ne treba njihova validacija da bi se osećao prijatno. Tišina je platno na kojem drugi projektuju svoje nesigurnosti.</p><p>Kada ćutiš, ti postaješ ogledalo. Ljudi će pričati više samo da bi pobegli od tvog mirnog pogleda, i u tom procesu će ti otkriti sve što treba da znaš.</p>`,
+                steps: [
+                    { title: "Prihvati Tenziju", icon: "fa-stopwatch", text: "Kada nastane tišina, ne prekidaj je. Gledaj sagovornika u oči i diši polako. Pusti ih da se vrpolje. Onaj ko prvi progovori iz nelagode gubi okvir. Neka tišina bude teška za njih, a laka za tebe." },
+                    { title: "Pauza Moći", icon: "fa-pause", text: "Pre nego što odgovoriš na važno pitanje, sačekaj pune 3 sekunde. Broj u glavi: 1... 2... 3... To signalizira da ti kontrolišeš vreme, da razmišljaš pre nego što govoriš, i da tvoje reči imaju težinu zlata." }
+                ],
+                mission: "Danas, u tri različita razgovora, namerno napravi pauzu od 3-4 sekunde pre nego što odgovoriš na direktno pitanje. Posmatraj kako se sagovornik ponaša u toj tišini – da li pokušava da se opravda?",
+                journal: "Kako si se osećao tokom tišine? Da li je srce kucalo brže? Da li je sagovornik pokušao da popuni prostor mucanjem?"
+            },
+            { 
+                day: 2, phase: 1, title: 'Pogled Predatora', 
+                msg: "Oči su jedini deo mozga vidljiv spolja. Neka tvoje budu mirne.", 
+                img: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=1600', 
+                intro: `<p>Oči su primarni alat dominacije kod svih primata. U sali za sastanke, kao i u džungli, onaj ko prvi skrene pogled priznaje poraz. Većina ljudi ima 'lutajući pogled' - gledaju okolo jer su nervozni, traže izlaz ili su preplavljeni stimulansima. Visoki status zahteva miran, laserski fokus.</p><p>Ovo nije agresivno, psihopatsko buljenje. To je mirno, analitičko posmatranje koje kaže: 'Vidim te, razumem te, i ne plašim se onoga što vidim.' Kada nekoga gledaš sa potpunom pažnjom, a bez treptanja, ti im šalješ signal da si ti taj koji procenjuje.</p>`,
+                steps: [
+                    { title: "Trougao Moći", icon: "fa-eye", text: "Fokusiraj se na tačku između obrva sagovornika ili na jedno oko. To stvara intenzivan pogled koji je njima blago neprijatan (jer se osećaju 'pročitano'), a tebi daje apsolutnu kontrolu bez agresije." },
+                    { title: "Sporo Treptanje", icon: "fa-eye-slash", text: "Nervozni ljudi trepću brzo i trzavo. Ti trepći svesno i sporo, kao lenji lav. To podsvesti druge osobe govori da si opušten i da imaš svo vreme ovog sveta." }
+                ],
+                mission: "U svakoj interakciji danas, budi poslednji koji skreće pogled. Kada završite razgovor, ne sklanjaj pogled naglo u pod (znak potčinjavanja), već polako u stranu, kao da ti je nešto drugo privuklo pažnju.",
+                journal: "Da li si primetio da ljudi brže sklanjaju pogled? Da li se osećaš moćnije kada zadržiš fokus?"
+            },
+            { 
+                day: 3, phase: 1, title: 'Zauzimanje Teritorije', 
+                msg: "Tvoje telo ne traži dozvolu da postoji. Ono se širi.", 
+                img: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=1600', 
+                intro: `<p>Dominacija je u svojoj suštini prostorna. Beta mentalitet se 'skuplja' da ne bi smetao, prekršta ruke i noge, zauzima što manje mesta u javnom prevozu ili za stolom. Lider zauzima prostor. On se širi. On poseduje okolinu.</p><p>Tvoj govor tela mora slati poruku: 'Ovo je moja teritorija'. Naučno je dokazano da 'Power Posing' (širenje tela) smanjuje kortizol (stres) i povećava testosteron. Tvoje telo menja tvoj um.</p>`,
+                steps: [
+                    { title: "Otvorena Fronta", icon: "fa-user-shield", text: "Nikada ne prekrštaj ruke preko grudi (klasičan odbrambeni stav). Otkrij grudi i stomak (vitalne organe). To šalje primarni signal: 'Ne bojim se napada, toliko sam siguran u sebe'." },
+                    { title: "Vlasništvo nad Prostorom", icon: "fa-expand-arrows-alt", text: "Gde god da sedneš, zauzmi 10% više mesta nego što ti treba. Stavi ruku na naslon susedne stolice. Raširi dokumenta ili telefon po stolu. Ne skupljaj se kada neko prođe." }
+                ],
+                mission: "Na javnom mestu (kafić, klupa, kancelarija), svesno zauzmi više prostora. Nasloni se unazad, raširi ruke. Oseti kako se menja tvoja unutrašnja hemija.",
+                journal: "Da li ti je bilo neprijatno da zauzmeš prostor? Zašto? Kako su drugi reagovali na tvoje širenje?"
+            },
+            { 
+                day: 4, phase: 1, title: 'Emocionalna Tvrđava', 
+                msg: "Reagovati znači biti kontrolisan. Budi stena o koju se talasi razbijaju.", 
+                img: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1600', 
+                intro: `<p>Ništa ne uništava autoritet brže od emocionalne reaktivnosti. Ako te neko može lako naljutiti, uvrediti ili previše oduševiti, on te poseduje. On pritiska dugme, ti skačeš kao marioneta.</p><p>Stoicizam je ultimativna moć modernog doba. Lider mora biti emocionalno stabilan centar u haosu. Kada svi paniče, ti analiziraš. Kada svi slave pre vremena, ti planiraš sledeći korak. Budi kao planina - vreme se menja oko nje, oluje prolaze, ali ona se ne pomera.</p>`,
+                steps: [
+                    { title: "Lice od Kamena", icon: "fa-mask", text: "Vežbaj lice bez ekspresije dok slušaš druge. Ne klimaj glavom da bi im udovoljio i pokazao da si 'dobar'. Neka oni rade za tvoju reakciju. Tvoje lice je skupa nekretnina, ne deli emocije besplatno." },
+                    { title: "Odložena Reakcija", icon: "fa-hourglass-half", text: "Kada se desi problem, ne reaguj odmah. Udahni. Izbroj do 5. Izaberi emociju koju ćeš prikazati, umesto da te emocija preplavi. Reaguj strateški, ne impulsivno." }
+                ],
+                mission: "Danas, kada se desi nešto iritantno (gužva u saobraćaju, neprijatan mejl), nateraj se da fizički ostaneš potpuno miran. Bez psovke, bez mrštenja.",
+                journal: "Koju situaciju si uspeo da 'preživiš' bez reakcije? Kako je to uticalo na ishod i tvoj osećaj kontrole?"
+            },
+            { 
+                day: 5, phase: 1, title: 'Ton Komandanta', 
+                msg: "Spusti glas. Neka reči padaju teško, kao kamenje u duboku vodu.", 
+                img: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=1600', 
+                intro: `<p>Visoki tonovi su evolutivno povezani sa traženjem odobravanja, panikom ili strahom. Duboki, spori tonovi su tonovi naredbe i sigurnosti. Tvoj glas je instrument autoriteta, moraš ga naštimovati.</p><p>Najveća greška koju ljudi prave je 'uzlazna infleksija' - podizanje tona na kraju rečenice. Zbog toga svaka njihova izjava zvuči kao pitanje ('Idemo tamo?'). Lider spušta ton na kraju ('Idemo tamo.'). To se zove 'Command Tonalilty'.</p>`,
+                steps: [
+                    { title: "Silazna Infleksija", icon: "fa-arrow-down", text: "Svesno spusti ton na kraju rečenice. Pretvoraj pitanja u konstatacije. To zvuči kao da je stvar već odlučena i da nema mesta raspravi." },
+                    { title: "Sporost i Težina", icon: "fa-weight-hanging", text: "Uspori govor za 20%. Brz govor signalizira strah da ćeš biti prekinut. Govori polako i sa pauzama. Nateraj ih da čekaju tvoju sledeću reč." }
+                ],
+                mission: "Snimi sebe kako čitaš pasus teksta normalno, a zatim kako ga čitaš sporije, dublje i sa silaznom infleksijom. Razlika će biti šokantna.",
+                journal: "Da li si primetio da te ljudi pažljivije slušaju kada govoriš sporije i tiše?"
+            },
+            { 
+                day: 6, phase: 1, title: 'Vrednovanje Vremena', 
+                msg: "Tvoje vreme je jedini resurs koji se ne obnavlja. Ponašaj se tako.", 
+                img: 'https://images.unsplash.com/photo-1501139083538-0139583c61df?q=80&w=1600', 
+                intro: `<p>Vreme je valuta moći. U svakoj organizaciji, podređeni čekaju, a nadređeni se čekaju. Ali više od toga, pravi autoritet znači da ne dozvoljavaš drugima da troše tvoje vreme glupostima i 'praznim pričama'.</p><p>Ako si uvek dostupan, tvoje vreme nema vrednost. Zakon ponude i potražnje važi i za tebe. Moraš postati škrt sa svojom pažnjom. Tvoje 'DA' za sastanak mora biti skupo.</p>`,
+                steps: [
+                    { title: "Prekidanje Besmisla", icon: "fa-cut", text: "Ako razgovor ne vodi nigde, prekini ga bez izvinjenja. 'Hajde da pređemo na suštinu' ili 'Imam obaveze, šta je zaključak?'. To pokazuje da ceniš svoje vreme iznad tuđih osećanja." },
+                    { title: "Kontrolisana Dostupnost", icon: "fa-mobile-alt", text: "Ne odgovaraj na poruke odmah (osim ako je hitnoća stvarna). Neka čekaju. Odgovaraj u blokovima vremena kada tebi odgovara. Ne budi Pavlovljv pas koji skače na zvuk notifikacije." }
+                ],
+                mission: "Danas odbij jedan zahtev za tvojim vremenom koji ti ne donosi korist, ili prekini jedan telefonski razgovor čim dobiješ potrebnu informaciju.",
+                journal: "Kome si danas poklonio svoje vreme bespotrebno? Kako ćeš to sprečiti sutra?"
+            },
+            { 
+                day: 7, phase: 1, title: 'Refleksija: Aura Moći', 
+                msg: "Autoritet nije ono što radiš, već ono što zračiš kad ne radiš ništa.", 
+                img: 'https://images.unsplash.com/photo-1464938050520-ef2270bb8ce8?q=80&w=1600', 
+                intro: `<p>Prva faza je završena. Izgradio si unutrašnju tvrđavu: Tišinu, Pogled, Stav, Emocije, Glas i Vreme. Ovo su temelji na kojima se gradi sve ostalo.</p><p>Sada više ne ulaziš u sobu nadajući se da ćeš se dopasti ljudima. Ulaziš u sobu da proceniš da li se oni dopadaju tebi. To je fundamentalna promena paradigme koja stvara 'Auru Moći'. Ljudi to osećaju pre nego što progovoriš. Osećaju težinu tvog prisustva.</p>`,
+                steps: [
+                    { title: "Integracija", icon: "fa-cogs", text: "Ovo nisu trikovi koje radiš ponekad. Ovo je tvoj novi način postojanja. Tvoj 'Default' mod. Proveri svoje držanje sada. Proveri disanje." },
+                    { title: "Samo-analiza", icon: "fa-search", text: "Gde si još uvek slab? Gde još uvek tražiš odobravanje? Identifikuj pukotine u oklopu pre nego što pređemo na verbalni rat." }
+                ],
+                mission: "Provedi 15 minuta u potpunoj tišini, bez telefona. Vizualizuj sebe kako ulaziš u prostoriju sa svim ovim osobinama. Oseti tu energiju u telu.",
+                journal: "Kako se tvoja slika o sebi promenila u poslednjih 7 dana? U kojoj situaciji si se osećao najmoćnije?"
+            },
+
+            // FAZA 2: VERBALNA DOMINACIJA
+            { 
+                day: 8, phase: 2, title: 'Kontrola Okvira (Frame)', 
+                msg: "Ko definiše pravila igre, taj uvek pobeđuje. Postavi Okvir.", 
+                img: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=1600', 
+                intro: `<p>Ulazimo u verbalnu fazu. U socijalnoj dinamici, sve je 'Frame' (Okvir). Okvir je kontekst ili 'značenje' kroz koje gledamo situaciju. U svakom razgovoru, jači okvir guta slabiji. Uvek.</p><p>Ako se pravdaš nekome, ti si u njihovom okviru (oni su sudija, ti si optuženi). Ako pokušavaš da ih impresioniraš, oni su nagrada, ti si lovac. Dominacija je sposobnost da nametneš svoj okvir realnosti. Tvoj cilj je da oni uđu u tvoj svet, a ne ti u njihov.</p>`,
+                steps: [
+                    { title: "Nikad se ne pravdaj", icon: "fa-gavel", text: "Pravdanje je priznanje podređenosti. Ako te optuže za nešto sitno, ili ignoriši ili preokreni. Umesto 'Izvini što kasnim, bila je gužva', reci 'Gužva je bila neverovatna, ali stigao sam. Počnimo'." },
+                    { title: "Meta-komentar", icon: "fa-comment-dots", text: "Komentariši njihovo ponašanje kao posmatrač. 'Deluješ mi nervozno', 'Zašto si tako defanzivan?'. Time se postavljaš kao sudija njihove realnosti i preuzimaš okvir." }
+                ],
+                mission: "Danas, ako neko pokuša da ti nametne krivicu ili te ispita ('Gde si bio?', 'Zašto ovo nije gotovo?'), odbij da se pravdaš. Daj kratak odgovor i odmah promeni temu.",
+                journal: "Ko danas drži 'okvir' u tvojim odnosima (posao, veza)? Kako možeš preokrenuti dinamiku?"
+            },
+            { 
+                day: 9, phase: 2, title: 'Umetnost Odbijanja', 
+                msg: "'Ne' je kompletna rečenica. Ne pravdaj se podređenima.", 
+                img: 'https://images.unsplash.com/photo-1512428559087-560fa0db7989?q=80&w=1600', 
+                intro: `<p>Sposobnost da kažeš 'Ne' bez osećaja krivice je temelj suvereniteta. Mnogi ljudi kažu 'Ne', ali onda odmah dodaju 'zato što...' i krenu da nižu izgovore.</p><p>Kada se pravdaš za svoje 'Ne', ti zapravo tražiš dozvolu da odbiješ. Ti im daješ priliku da reše tvoj 'problem' i ipak te ubede. Lider ne traži dozvolu. Njegovo 'Ne' je zakon. Njegovo odbijanje je kraj diskusije.</p>`,
+                steps: [
+                    { title: "Čisto Ne", icon: "fa-times", text: "Vežbaj da kažeš 'Ne', 'Ne mogu' ili 'To mi ne odgovara'. I onda stani. Tačka. Pusti tišinu da odradi ostalo. Ne popunjavaj je izgovorima." },
+                    { title: "Meko Odbijanje", icon: "fa-shield-alt", text: "Ako moraš biti diplomatski nastrojen: 'To mi se trenutno ne uklapa u planove'. To je neoborivo jer govori o tvojim planovima (koji su prioritet), a ne o spoljnim okolnostima." }
+                ],
+                mission: "Odbij jedan zahtev danas bez davanja razloga. Samo reci da ne možeš ili da ti ne odgovara. Oseti težinu te reči.",
+                journal: "Da li si osetio potrebu da se opravdaš? Šta misliš, čega se plašiš ako samo kažeš 'Ne'?"
+            },
+            { 
+                day: 10, phase: 2, title: 'Presecanje Napada', 
+                msg: "Kad te napadnu, ne brani se. Napadni njihovu nameru.", 
+                img: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=1600', 
+                intro: `<p>Ljudi će te testirati. Pasivno-agresivni komentari, loše šale na tvoj račun, podbadanja pred drugima. To su 'shit-tests'. Ako se braniš, ljutiš ili ućutiš, pao si test. Pokazao si da mogu da te poremete.</p><p>Cilj je da ostaneš netaknut i da učiniš da njihov napad izgleda detinjasto, nebitno ili socijalno neinteligentno. Ti ne ulaziš u blato sa njima; ti ih gledaš sa balkona.</p>`,
+                steps: [
+                    { title: "Slažem se i preuveličavam", icon: "fa-thumbs-up", text: "Ako kažu 'Kasniš', reci 'Da, i očekujem crveni tepih i aplauz sledeći put'. Oduzmi im moć prihvatanjem i pretvaranjem napada u apsurd." },
+                    { title: "Fokus na Nameru", icon: "fa-bullseye", text: "Direktno ih razotkrij. Pitaj mirnim glasom: 'Da li pokušavaš da me povrediš tim komentarom?' ili 'Da li ti je danas loš dan?'. To odmah zaustavlja igru i čini da oni izgledaju loše." }
+                ],
+                mission: "Ako te neko 'pecne' danas, ne brani se. Nasmej se i složi se sa njima na ironičan način, ili ih pitaj da objasne šta su mislili.",
+                journal: "Kako ljudi reaguju kada njihov napad ne naiđe na otpor već na zabavu ili psihoanalizu?"
+            },
+            { 
+                day: 11, phase: 2, title: 'Strateška Ranjivost', 
+                msg: "Samo kralj može da priušti da siđe sa trona. To ga čini još većim.", 
+                img: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=1600', 
+                intro: `<p>Paradoks moći: Onaj ko se previše trudi da izgleda savršeno i nepogrešivo, zapravo deluje nesigurno i lažno. Ljudi ne veruju savršenstvu. Pravi autoritet je toliko siguran u svoju vrednost da sme da pokaže manu.</p><p>To se zove 'strateška ranjivost'. Priznavanjem male greške ili mane, ti razoružavaš kritičare (nema šta da napadnu jer si već priznao) i gradiš poverenje, pokazujući da se ne plašiš istine. Ti si čovek, ali čovek koji vlada svojim manama.</p>`,
+                steps: [
+                    { title: "Priznaj Malo, Vodi Veliko", icon: "fa-balance-scale", text: "Priznaj očiglednu grešku ('Tu sam pogrešio'), ali ne droni o njoj. Odmah pređi na rešenje. To pokazuje odgovornost i fokus na budućnost, a ne slabost." },
+                    { title: "Humanizacija", icon: "fa-user", text: "Priznavanje da ne znaš sve ('Ne znam odgovor na to trenutno, ali saznaću') je hiljadu puta moćnije od lupetanja gluposti koje svi prepoznaju kao laž." }
+                ],
+                mission: "Priznaj jednu malu grešku ili neznanje danas, direktno i bez uvijanja, gledajući osobu u oči. Ne traži oprost, samo konstatuj.",
+                journal: "Da li je priznanje umanjilo tvoj autoritet ili ga je (paradoksalno) povećalo u očima drugih?"
+            },
+            { 
+                day: 12, phase: 2, title: 'Rečnik Moći', 
+                msg: "Izbaci reči koje te smanjuju. Reči kreiraju realnost.", 
+                img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=1600', 
+                intro: `<p>Jezik je softver kojim programiraš percepciju drugih o sebi. Mnogi ljudi koriste 'jezik sluga' a da nisu svesni. Reči kao 'samo', 'pokušaću', 'možda', 'izvini što smetam', 'da li bi mogao' su virusi koji uništavaju tvoj status.</p><p>Kraljevi ne 'pokušavaju', oni rade ili ne rade. Lideri ne 'smetaju', oni doprinose. Kada koristiš slabe reči, ti podsvesti slušaoca govoriš: 'Ja sam nebitan, ne slušaj me'.</p>`,
+                steps: [
+                    { title: "Eliminacija 'Samo'", icon: "fa-trash", text: "Nikad ne reci 'Hteo sam samo da pitam'. Reci 'Imam pitanje'. Reč 'samo' je umanjivač. Ona signalizira da smatraš da nisi vredan njihovog vremena." },
+                    { title: "Stop 'Pokušaću'", icon: "fa-ban", text: "Joda je bio u pravu. 'Pokušaću' je laž. To je izgovor unapred spreman za neuspeh. Reci 'Uradiću to' ili 'Ne mogu to da uradim'. Budi precizan." }
+                ],
+                mission: "Provedi dan svesno izbegavajući reči 'Samo', 'Izvini' (osim ako si stvarno napravio štetu) i 'Pokušaću'. Budi svestan svake reči.",
+                journal: "Koliko često koristiš ove reči po navici? Kako se osećaš kada govoriš direktnije?"
+            },
+            { 
+                day: 13, phase: 2, title: 'Ispitivanje kao Oružje', 
+                msg: "Onaj ko postavlja pitanja kontroliše smer razgovora.", 
+                img: 'https://images.unsplash.com/photo-1575320181282-9afab399332c?q=80&w=1600', 
+                intro: `<p>U svakoj socijalnoj dinamici postoji hijerarhija: Osoba koja postavlja pitanja je iznad (šef, policajac, doktor, sudija), osoba koja odgovara je ispod (radnik, osumnjičeni, pacijent).</p><p>Ako želiš da preuzmeš kontrolu nad razgovorom, prestani da daješ duge odgovore i počni da postavljaš pitanja. Ti vodiš ples. Ti usmeravaš reflektor na njih. Ljudi vole da pričaju o sebi, i dok oni pričaju, ti prikupljaš informacije i moć.</p>`,
+                steps: [
+                    { title: "Vraćanje Pitanja", icon: "fa-reply", text: "Ako te pitaju nešto neprijatno, ne odgovaraj odmah. Pitaj: 'Zašto te to zanima?' ili 'Šta tačno podrazumevaš pod tim?'. Neka oni objasne sebe tebi." },
+                    { title: "Sokratska Metoda", icon: "fa-brain", text: "Umesto da se raspravljaš i kažeš 'Nisi u pravu', vodi ih pitanjima do zaključka da nisu u pravu. 'Kako misliš da to funkcioniše u praksi?', 'Šta ako se desi X?'. Neka se sami sapletu." }
+                ],
+                mission: "U razgovoru danas, pokušaj da postaviš 3 pitanja zaredom (nadovezujući se na njihove odgovore) pre nego što daš bilo kakvo svoje mišljenje.",
+                journal: "Da li si osetio kako se težište razgovora prebacuje na tebe kada ti postavljaš pitanja?"
+            },
+            { 
+                day: 14, phase: 2, title: 'Refleksija: Verbalni Mač', 
+                msg: "Reči mogu da seku dublje od noža. Nauči hiruršku preciznost.", 
+                img: 'https://images.unsplash.com/photo-1503428593586-e225b476d0cc?q=80&w=1600', 
+                intro: `<p>Druga faza je gotova. Tvoj jezik je sada oštar, precizan i ekonomičan. Više ne rasipaš reči u vetar. Naučio si da braniš svoj okvir, da odbijaš bez krivice i da vodiš razgovor pitanjima.</p><p>Tvoje 'Ne' je postalo zakon. Tvoja pitanja vode razgovor. Tvoje odbijanje da se pravdaš te čini nedodirljivim. Ti više nisi učesnik u tuđim dramama, ti si režiser svoje. Verbalna dominacija nije u tome da nadglasaš druge, već da tvoje reči imaju najveću težinu.</p>`,
+                steps: [
+                    { title: "Revizija", icon: "fa-history", text: "Pregledaj situacije iz protekle nedelje gde si koristio 'okvir'. Gde si uspeo da dominiraš, a gde su te uvukli u svoju igru pravdanja?" },
+                    { title: "Svesnost", icon: "fa-lightbulb", text: "Nastavi da loviš poštapalice i slabe reči. To je doživotni proces čišćenja govora. Snimi sebe kako pričaš telefonom i analiziraj." }
+                ],
+                mission: "Napiši 3 situacije iz prošlosti gde si izgubio moć jer si se pravdao, i napiši scenario kako bi sada reagovao koristeći nove tehnike.",
+                journal: "Koja je najveća promena u načinu na koji ljudi reaguju na tvoje reči sada?"
+            },
+
+            // FAZA 3: STRATEŠKA KONTROLA
+            { 
+                day: 15, phase: 3, title: 'Zakon Oskudice', 
+                msg: "Ljudi žele ono što ne mogu da imaju. Budi nedostupan.", 
+                img: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?q=80&w=1600', 
+                intro: `<p>Faza III: Strateški Autoritet. Prvi zakon ekonomije je zakon ponude i potražnje. Što je nečega više, cena mu je manja. Ako je tvoje prisustvo uvek dostupno, ako si uvek tu da pomogneš, slušaš i klimaš glavom, tvoja vrednost pada na nulu.</p><p>Moraš naučiti da strateški povlačiš svoju pažnju. Budi nagrada koju treba osvojiti, a ne javno dobro koje se podrazumeva. Stvori osećaj da je tvoje vreme ekskluzivno.</p>`,
+                steps: [
+                    { title: "Povlačenje", icon: "fa-arrow-left", text: "Daj im pažnju, budi šarmantan i prisutan, a onda naglo 'nestani' (moraš da ideš, ne odgovaraš na poruke par sati). Ta promena toplo-hladno stvara zavisnost i tera ih da traže tvoju validaciju." },
+                    { title: "Moć Odlaska", icon: "fa-door-open", text: "U svakim pregovorima pobeđuje onaj kome manje treba dogovor. Uvek budi spreman da ustaneš od stola i odeš. To je jedina stvarna pregovaračka moć. Ako ne možeš da odeš, već si izgubio." }
+                ],
+                mission: "Završi jedan prijatan razgovor ili sastanak prvi, na samom vrhuncu, pre nego što postane dosadan. Reci 'Bilo je sjajno, ali moram da idem'. Ostavi ih da žele još.",
+                journal: "Kako si se osećao kada si 'uskratio' svoje prisustvo? Da li su te drugi više tražili ili cimali nakon toga?"
+            },
+            { 
+                day: 16, phase: 3, title: 'Mikro-Agresije', 
+                msg: "Primeti sitne ubode. Ako ih ignorišeš, krvariš do smrti.", 
+                img: 'https://images.unsplash.com/photo-1594322436404-5a0526db4d13?q=80&w=1600', 
+                intro: `<p>Ljudi često testiraju dominaciju kroz 'mikro-agresije': prekidanje dok pričaš, gledanje u telefon dok im se obraćaš, 'zaboravljanje' tvog imena, hronično kašnjenje. To su suptilni načini da ti kažu 'Ti si nebitan'.</p><p>Ako pređeš preko ovoga 'iz pristojnosti', signaliziraš da si nizak status i da prihvataš nepoštovanje. Moraš ih korigovati, ali ne besom (to je slabost), već hladnim, roditeljskim autoritetom.</p>`,
+                steps: [
+                    { title: "Stop i Stare", icon: "fa-hand-paper", text: "Ako te prekinu u sred rečenice, stani odmah. Ne pokušavaj da ih nadglasaš. Gledaj ih u oči dok ne ućute. Sačekaj 2 sekunde tišine. Onda nastavi tačno gde si stao. Ne dozvoli da te ućutkaju." },
+                    { title: "Javna Prozivka", icon: "fa-exclamation", text: "Ako gledaju u telefon dok pričaš, stani i ćuti. Kad podignu pogled (a hoće, zbog tišine), reci mirno: 'Mogu da sačekam da završiš to dopisivanje, pa da nastavimo'. Neka im bude neprijatno pred svima." }
+                ],
+                mission: "Ako te neko danas prekine ili pokaže nepoštovanje, nemoj samo nastaviti dalje. Stani, sačekaj tišinu, pa nastavi ili ih koriguj.",
+                journal: "Koje mikro-agresije najčešće doživljavaš? Kako si do sada reagovao na njih, a kako ćeš od sad?"
+            },
+            { 
+                day: 17, phase: 3, title: 'Fizički Dodir Dominacije', 
+                msg: "Dodir je privilegija moćnih. Koristi ga zaštitnički, ali čvrsto.", 
+                img: 'https://images.unsplash.com/photo-1521791136064-7985c1d10093?q=80&w=1600', 
+                intro: `<p>U hijerarhiji primata, dinamika je jasna: dominantni mužjak ima privilegiju da dodiruje podređene (tapšanje po leđima, rukovanje, ruka na ramenu). Podređeni nikad ne dodiruje nadređenog na taj način.</p><p>Koristi dodir da suptilno uspostaviš hijerarhiju i pokažeš sigurnost. To mora biti očinski, pokroviteljski ili prijateljski dodir, nikako jeziv ili agresivan. To je dodir koji kaže 'Ja kontrolišem ovu situaciju'.</p>`,
+                steps: [
+                    { title: "Očinski Dodir", icon: "fa-hand-holding", text: "Lagano tapšanje po nadlaktici (ne ramenu, to je previše) ili laktu dok se rukuješ ili poentiraš nešto. To suptilno kaže: 'Ja sam ovde glavni, ja te vodim, ja te štitim'." },
+                    { title: "Rukovanje", icon: "fa-handshake", text: "Dlan vertikalan (ne dozvoli da tvoj dlan bude dole). Stisak čvrst i suv. Gledaj u oči dok ne pustiš ruku. Ne puštaj prvi, ali ne drži predugo. Ti određuješ kad kontakt počinje i kad prestaje." }
+                ],
+                mission: "Prilikom rukovanja danas, iskoristi slobodnu ruku da lagano dotakneš podlakticu ili lakat sagovornika na 1 sekund. Posmatraj govor tela.",
+                journal: "Da li si primetio promenu u stavu sagovornika nakon dodira? Da li su postali prijemčiviji?"
+            },
+            { 
+                day: 18, phase: 3, title: 'Pregovaranje sa Visine', 
+                msg: "Budi spreman da odšetaš u svakom trenutku. To je tvoja snaga.", 
+                img: 'https://images.unsplash.com/photo-1507537297725-24a1c029d3ca?q=80&w=1600', 
+                intro: `<p>Život je pregovaranje. Plata, cena stana, gde se ide na večeru, ko će oprati sudove. Većina ljudi pregovara iz straha ('šta ako izgubim ovaj posao/klijenta?'). Ti pregovaraš iz izobilja.</p><p>Kada ti daju ponudu, nemoj odmah reagovati. Koristi tišinu i blago razočaranje. Nateraj ih da se bore za tvoj pristanak. Onaj ko više želi dogovor, gubi u pregovorima.</p>`,
+                steps: [
+                    { title: "Tišina posle Ponude", icon: "fa-volume-mute", text: "Kad čuješ cenu ili uslove, ćuti i gledaj ih u oči, blago namršten ili skeptičan. Broj do 5. Ta tišina vrišti 'To nije dovoljno'. Nelagoda će ih često naterati da sami poboljšaju ponudu pre nego što ti išta kažeš." },
+                    { title: "Bez Oduševljenja", icon: "fa-meh", text: "Nikad ne pokazuj sreću zbog ponude, čak i ako je sjajna. Zadrži poker face. Reci 'Hm, zanimljivo, ali moram da razmislim'. Oduševljenje znači da su te dobili jeftino." }
+                ],
+                mission: "U nekoj transakciji danas (prodavnica, pijaca, poslovni dogovor), zatraži bolje uslove ili popust, a onda ćuti i čekaj. Ne popunjavaj tišinu.",
+                journal: "Kako reaguješ na pritisak pregovora? Da li inače žuriš da pristaneš da bi smanjio tenziju?"
+            },
+            { 
+                day: 19, phase: 3, title: 'Izgradnja Dvora', 
+                msg: "Vuk samotnjak je romantičan mit. Pravi kralj ima vojsku.", 
+                img: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=1600', 
+                intro: `<p>Pravi autoritet zahteva saveznike. Ne možeš sve sam. 'Sigma male' usamljenik je limitiran. Kralj gradi dvor. Trebaju ti ljudi koji će širiti tvoj uticaj, donositi informacije i braniti tvoje interese kad nisi u prostoriji.</p><p>Moraš identifikovati ključne igrače u svom okruženju i vezati ih za sebe - uslugama, poštovanjem, zajedničkim interesom ili strahom. Tvoja moć raste eksponencijalno kroz mrežu lojalnih ljudi.</p>`,
+                steps: [
+                    { title: "Zasluge i Krivica", icon: "fa-users", text: "Liderski trik: Daj timu sve zasluge za uspeh ('Oni su to uradili'). Preuzmi svu krivicu za neuspeh ('Ja sam odgovoran'). To stvara fanatičnu lojalnost jer se ljudi osećaju sigurno pod tvojim vođstvom." },
+                    { title: "Unutrašnji Krug", icon: "fa-circle-notch", text: "Identifikuj ko ima informacije i neformalni uticaj. Približi ih sebi. Učini im uslugu koju ne mogu lako da vrate. Stvori osećaj elitne pripadnosti ('Mi protiv ostalih') oko sebe." }
+                ],
+                mission: "Identifikuj jednu osobu koja ima uticaj u tvom okruženju i učini joj neku uslugu ili joj daj iskren, specifičan kompliment pred drugima (javna validacija).",
+                journal: "Ko su tvoji saveznici? Da li gradiš odnose strateški ili stihijski? Na koga možeš da računaš?"
+            },
+            { 
+                day: 20, phase: 3, title: 'Vizija i Vođstvo', 
+                msg: "Ljudi su izgubljeni. Daj im smer i pratiće te u pakao.", 
+                img: 'https://images.unsplash.com/photo-1467810563316-b5476525c0f9?q=80&w=1600', 
+                intro: `<p>Ljudi su evolutivno programirani da traže vođu jer je svet haotičan, komplikovan i strašan. Oni traže nekoga ko zna put. Nekoga ko ima plan.</p><p>Ne moraš biti 100% u pravu, moraš biti 100% siguran. Ljudi radije prate sigurnog čoveka sa prosečnim planom, nego nesigurnog genija koji okleva. Tvoja odlučnost je njihova sigurnost.</p>`,
+                steps: [
+                    { title: "Apsolutna Uverenost", icon: "fa-check-circle", text: "Govori o budućnosti kao da je činjenica koja se već desila. Ne 'Mislim da bi trebalo...', već 'Uradićemo ovo.' 'Ovo će se desiti.' To smiruje tuđe strahove i uklanja sumnju." },
+                    { title: "Simplifikacija Haosa", icon: "fa-project-diagram", text: "Uprosti probleme. Ljudi su paralizovani opcijama. Daj jasne instrukcije. 'Prvi korak je X. Drugi je Y.' Budi svetlo u magli. Ko donosi jasnoću, taj vodi." }
+                ],
+                mission: "Preuzmi inicijativu u grupi danas (makar bilo samo odlučivanje gde se ide na ručak ili šta se gleda) bez pitanja 'šta vi mislite?'. Samo reci 'Idemo tamo, biće odlično'.",
+                journal: "Da li su ljudi osetili olakšanje što je neko drugi doneo odluku umesto njih?"
+            },
+            { 
+                day: 21, phase: 3, title: 'Ascendrix: Apsolutna Vlast', 
+                msg: "Kruna je teška samo onima koji nemaju vrat da je nose.", 
+                img: 'https://images.unsplash.com/photo-1541560052-77ec1bbc09f7?q=80&w=1600', 
+                intro: `<p>Stigao si na kraj protokola. Ali ovo je zapravo početak. Totalni Autoritet nije cilj koji se postiže i zaboravlja, kao diploma na zidu. To je način života. To je disciplina koja se vežba svakog minuta.</p><p>Ti više ne 'glumiš' moć. Ti jesi moć. Integrisao si tišinu, stav, jezik i strategiju. Svet se sada prilagođava tebi, a ne ti njemu. Zapamti: tvoja moć služi da gradiš, da štitiš svoje i da ostvariš viziju. Tirani vladaju strahom, kraljevi vladaju poštovanjem.</p>`,
+                steps: [
+                    { title: "Integracija Senke", icon: "fa-yin-yang", text: "Ne stidi se svoje želje za moći i dominacijom. To je gorivo. Agresija nije loša ako je kontrolisana i usmerena. Budi 'mirni ratnik' - sposoban za nasilje, ali koji bira mir." },
+                    { title: "Nasleđe", icon: "fa-landmark", text: "Pravi kralj ostavlja kraljevstvo boljim nego što ga je našao. Koristi svoj novostečeni autoritet da podigneš druge, da mentorišeš i da stvoriš vrednost. Moć koja ne služi ničemu osim egu je kratkog daha." }
+                ],
+                mission: "Napiši svoj 'Manifest Moći'. 5 pravila po kojima ćeš živeti i voditi od danas pa nadalje. Ovo je tvoj lični zakonik koji niko ne sme da prekrši.",
+                journal: "Ko si ti sada u odnosu na osobu od pre 21 dan? Šta je tvoja nova realnost? Ascendrix je aktiviran."
+            }
+        ];
+
+        // --- STATE & LOCAL STORAGE ---
+        let playerState = JSON.parse(localStorage.getItem('ascendrixProStateColor')) || { completedDays: [] };
+        
+        // --- INIT ---
+        window.onload = () => {
+            if(window.location.hash) {
+                const day = parseInt(window.location.hash.split('-')[1]);
+                loadDay(day);
+            } else {
+                loadDashboard();
+            }
+        };
+
+        // --- NAVIGATION ---
+        function toggleMenu() {
+            document.getElementById('menuOverlay').classList.toggle('active');
+            renderMenu();
+        }
+
+        function renderMenu() {
+            const container = document.getElementById('menuContainer');
+            let html = `<div onclick="toggleMenu(); loadDashboard()" class="menu-link border-l-4 border-white bg-[#111]"><span class="text-white font-bold tracking-widest text-xs">CENTRALNA KOMANDA</span></div>`;
+            
+            [1, 2, 3].forEach(phase => {
+                const title = phase === 1 ? "UNUTRAŠNJI AUTORITET" : phase === 2 ? "VERBALNA DOMINACIJA" : "STRATEŠKA KONTROLA";
+                html += `<div class="menu-phase">FAZA ${phase}: ${title}</div>`;
+                
+                courseData.filter(d => d.phase === phase).forEach(d => {
+                    const isDone = playerState.completedDays.includes(d.day);
+                    html += `
+                        <div onclick="toggleMenu(); loadDay(${d.day})" class="menu-link group">
+                            <span class="font-[var(--font-hud)] text-[var(--accent-gold)] text-xs w-8">0${d.day}</span>
+                            <span class="text-[#ccc] group-hover:text-white font-[var(--font-header)] text-sm tracking-wide transition uppercase">${d.title}</span>
+                            ${isDone ? '<i class="fas fa-check text-[var(--accent-gold)] text-xs ml-auto"></i>' : ''}
+                        </div>
+                    `;
+                });
+            });
+            container.innerHTML = html;
+        }
+
+        // --- DASHBOARD ---
+        function loadDashboard() {
+            const main = document.getElementById('mainContainer');
+            main.style.opacity = 0;
+            setTimeout(() => {
+                const totalProgress = Math.round((playerState.completedDays.length / 21) * 100);
+                
+                main.innerHTML = `
+                    <div class="text-center pt-8 md:pt-12">
+                        <div class="inline-block border border-[var(--accent-gold)] px-6 py-2 mb-10 bg-[rgba(197,160,89,0.1)]">
+                            <span class="hud-stat text-[var(--accent-gold)] font-bold tracking-widest">SYSTEM ONLINE // PROGRESS: ${totalProgress}%</span>
+                        </div>
+                        <h1 class="text-6xl md:text-9xl elite-title mb-8 tracking-tighter">ASCENDRIX</h1>
+                        <p class="hud-stat text-[#888] mb-24 text-sm tracking-[4px]">PROTOCOL: TOTAL AUTHORITY // STATUS: UNLOCKED</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-24 text-left">
+                            <div class="content-card cursor-pointer group" onclick="loadDay(1)">
+                                <div class="text-[var(--accent-gold)] text-5xl mb-8 group-hover:scale-110 transition duration-500"><i class="fas fa-user-astronaut"></i></div>
+                                <h3 class="text-2xl text-white mb-4 font-[var(--font-header)]">Faza I: Unutrašnji</h3>
+                                <p class="text-sm text-[#999] leading-relaxed font-[var(--font-body)]">Gospodarenje sobom. Tišina, stav, emocije. Izgradnja neprobojne psihološke tvrđave.</p>
+                                <div class="mt-6 h-1 w-full bg-[#333]"><div class="h-full bg-[var(--accent-gold)]" style="width: ${Math.min(100, (playerState.completedDays.filter(d=>d<=7).length/7)*100)}%"></div></div>
+                            </div>
+                            <div class="content-card cursor-pointer group" onclick="loadDay(8)">
+                                <div class="text-[var(--accent-gold)] text-5xl mb-8 group-hover:scale-110 transition duration-500"><i class="fas fa-bullhorn"></i></div>
+                                <h3 class="text-2xl text-white mb-4 font-[var(--font-header)]">Faza II: Verbalni</h3>
+                                <p class="text-sm text-[#999] leading-relaxed font-[var(--font-body)]">Jezički inženjering. Kontrola okvira, odbijanje i uništavanje otpora rečima.</p>
+                                <div class="mt-6 h-1 w-full bg-[#333]"><div class="h-full bg-[var(--accent-gold)]" style="width: ${Math.min(100, (playerState.completedDays.filter(d=>d>7 && d<=14).length/7)*100)}%"></div></div>
+                            </div>
+                            <div class="content-card cursor-pointer group" onclick="loadDay(15)">
+                                <div class="text-[var(--accent-gold)] text-5xl mb-8 group-hover:scale-110 transition duration-500"><i class="fas fa-chess-knight"></i></div>
+                                <h3 class="text-2xl text-white mb-4 font-[var(--font-header)]">Faza III: Strateški</h3>
+                                <p class="text-sm text-[#999] leading-relaxed font-[var(--font-body)]">Visoka politika. Savezništva, oskudica, pregovaranje i apsolutno vođstvo.</p>
+                                <div class="mt-6 h-1 w-full bg-[#333]"><div class="h-full bg-[var(--accent-gold)]" style="width: ${Math.min(100, (playerState.completedDays.filter(d=>d>14).length/7)*100)}%"></div></div>
+                            </div>
+                        </div>
+
+                        <button onclick="loadDay(1)" class="tactical-btn text-xl px-16 py-5 bg-[rgba(197,160,89,0.15)] tracking-[4px]">POKRENI PROTOKOL</button>
+                    </div>
+                `;
+                main.style.opacity = 1;
+            }, 300);
+        }
+
+        // --- LOAD DAY & INTEL ---
+        function loadDay(day) {
+            window.pendingDay = day;
+            const data = courseData.find(d => d.day === day);
+            
+            // Intel Drop
+            const intelOverlay = document.getElementById('intelOverlay');
+            document.getElementById('intelMessage').innerText = `"${data.msg}"`;
+            intelOverlay.classList.add('active');
+        }
+
+        function dismissIntel() {
+            document.getElementById('intelOverlay').classList.remove('active');
+            setTimeout(() => {
+                renderDayContent(window.pendingDay);
+            }, 500);
+        }
+
+        function renderDayContent(day) {
+            const data = courseData.find(d => d.day === day);
+            const main = document.getElementById('mainContainer');
+            const isCompleted = playerState.completedDays.includes(day);
+
+            main.style.opacity = 0;
+            setTimeout(() => {
+                window.scrollTo(0,0);
+                main.innerHTML = `
+                    <!-- HERO IMAGE SECTION -->
+                    <div class="relative w-full h-[45vh] md:h-[55vh] mb-16 border-b-2 border-[var(--accent-gold)] shadow-2xl overflow-hidden rounded-sm">
+                        <div class="absolute inset-0 bg-cover bg-center transition duration-[20s] hover:scale-105 hero-bg" 
+                             style="background-image: url('${data.img}');"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg-deep)] via-[var(--bg-deep)]/60 to-transparent"></div>
+                        
+                        <div class="absolute bottom-0 left-0 p-8 md:p-12 z-10 w-full">
+                            <div class="flex flex-col gap-5">
+                                <div class="flex items-center gap-4">
+                                    <span class="px-4 py-1 bg-[var(--accent-gold)] text-black text-[12px] font-bold uppercase tracking-widest font-[var(--font-hud)] shadow-lg">DAN 0${day}</span>
+                                    <span class="text-[#bbb] text-[12px] uppercase tracking-widest font-[var(--font-hud)]">FAZA 0${data.phase} // SECURITY CLEARANCE: ALPHA</span>
+                                </div>
+                                <h1 class="text-5xl md:text-7xl text-white font-[var(--font-header)] max-w-5xl uppercase leading-none tracking-wide drop-shadow-lg">${data.title}</h1>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LAYOUT GRID -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+                        
+                        <!-- LEFT COLUMN: DEEP CONTENT -->
+                        <div class="lg:col-span-8">
+                            <div class="prose prose-xl max-w-none text-[#e2e2e2] font-[var(--font-body)] leading-loose">
+                                <!-- Introduction -->
+                                <div class="mb-14 text-xl md:text-2xl font-light border-l-4 border-[var(--accent-platinum)] pl-8 ml-2 text-[#d1d5db] py-2">
+                                    ${data.intro}
+                                </div>
+                                
+                                <!-- Tactics -->
+                                <div class="my-16 bg-[#1a1a1c] p-1 border-y border-[#333]">
+                                    <h4 class="text-[var(--accent-gold)] font-[var(--font-header)] uppercase my-8 text-center text-lg tracking-[5px]">Operativni Protokoli</h4>
+                                    <div class="space-y-12 px-4 pb-8">
+                                        ${data.steps.map((s, i) => `
+                                            <div class="flex items-start gap-6 group">
+                                                <div class="step-icon text-2xl group-hover:border-[var(--accent-gold)] group-hover:text-[var(--accent-gold)] group-hover:bg-[rgba(197,160,89,0.1)] transition duration-300 rounded-sm">
+                                                    <i class="fas ${s.icon}"></i>
+                                                </div>
+                                                <div>
+                                                    <strong class="text-white block mb-3 text-2xl font-[var(--font-header)] uppercase tracking-wide group-hover:text-[var(--accent-platinum)] transition">${s.title}</strong>
+                                                    <p class="text-lg text-[#9ca3af] font-sans leading-relaxed">${s.text}</p>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Mission Box -->
+                                <div class="bg-gradient-to-r from-[#222] to-[#1a1a1a] p-10 border border-[#333] border-l-4 border-l-[var(--accent-gold)] mb-12 shadow-xl rounded-sm">
+                                    <h4 class="text-[var(--accent-gold)] font-[var(--font-hud)] uppercase mb-6 text-sm tracking-[4px] flex items-center">
+                                        <i class="fas fa-crosshairs mr-3 animate-pulse"></i> Direktiva Dana
+                                    </h4>
+                                    <p class="text-white font-[var(--font-body)] italic text-2xl leading-relaxed">"${data.mission}"</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- RIGHT COLUMN: ACTION & JOURNAL -->
+                        <div class="lg:col-span-4 space-y-10">
+                            <div class="bg-[#1f1f22] border border-[#333] p-8 sticky top-24 shadow-2xl rounded-sm">
+                                <h4 class="text-white font-[var(--font-header)] uppercase tracking-widest text-sm mb-8 pb-4 border-b border-[#333]">
+                                    Log Autoriteta <span class="text-[var(--accent-gold)] ml-2">// 0${day}</span>
+                                </h4>
+                                
+                                <div class="mb-8">
+                                    <p class="text-[11px] text-[#777] font-[var(--font-hud)] uppercase mb-3 tracking-widest">Pitanje za Refleksiju:</p>
+                                    <p class="text-lg text-[#ccc] italic font-serif mb-6 leading-relaxed">${data.journal}</p>
+                                    <textarea id="journalEntry" rows="8" placeholder="Unesi zapažanja... Tvoj um je tvoje oružje."></textarea>
+                                </div>
+
+                                <button onclick="markComplete(${day})" class="tactical-btn w-full flex justify-center items-center gap-3 hover:bg-[var(--accent-gold)] hover:text-black font-bold py-4">
+                                    ${isCompleted ? '<i class="fas fa-check-circle"></i> PODACI ARHIVIRANI' : '<i class="fas fa-save"></i> POTVRDI IZVRŠENJE'}
+                                </button>
+                                
+                                <div class="flex justify-between mt-12 pt-6 border-t border-[#333]">
+                                    ${day > 1 ? `<button onclick="loadDay(${day-1})" class="text-[11px] text-[#666] hover:text-[var(--accent-platinum)] font-[var(--font-hud)] uppercase tracking-widest transition flex items-center gap-2"><i class="fas fa-chevron-left"></i> Nazad</button>` : '<div></div>'}
+                                    ${day < 21 ? `<button onclick="loadDay(${day+1})" class="text-[11px] text-[#666] hover:text-[var(--accent-platinum)] font-[var(--font-hud)] uppercase tracking-widest transition flex items-center gap-2">Napred <i class="fas fa-chevron-right"></i></button>` : '<div></div>'}
+                                </div>
+                            </div>
+                            
+                            <!-- Status Indicator -->
+                            <div class="text-center">
+                                <p class="text-[10px] text-[#444] font-[var(--font-hud)] tracking-[3px]">ASCENDRIX SYSTEM v2.4 // SECURE CONNECTION</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                main.style.opacity = 1;
+            }, 300);
+        }
+
+        function markComplete(day) {
+            if(!playerState.completedDays.includes(day)) {
+                playerState.completedDays.push(day);
+                localStorage.setItem('ascendrixProStateColor', JSON.stringify(playerState));
+                
+                // Visual feedback
+                const btn = document.querySelector('button[onclick^="markComplete"]');
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> PODACI ARHIVIRANI';
+                btn.classList.add('bg-green-900', 'border-green-600', 'text-green-400');
+                btn.style.borderColor = '#4ade80';
+                btn.style.color = '#4ade80';
+            }
+        }
+
+    </script>
+</body>
+</html>
